@@ -1,6 +1,8 @@
 package model;
 
+
 import exceptions.DataException;
+import services.SheetsServices;
 
 public class Student {
     private int registration;
@@ -13,7 +15,7 @@ public class Student {
     private int grade_for_final_approval;
 
     public Student(int registration, String studanteName, int absences, int grade_one, int grade_two, int grade_three) {
-        
+
         try {
             this.setRegistration(registration);
             this.setStudanteName(studanteName);
@@ -23,15 +25,10 @@ public class Student {
             this.setGradle_three(grade_three);
             this.setGrade_for_final_approval(0);
         } catch (Exception dataException) {
-            System.out.printf("{message:'the data entered for creating the user is invalid',data:{registration:%d,studanteName:%s,absences:%d,grade_one:%d,grade_two:%d,grade_three:%f,grade_for_final_approval:%s}}",
-                registration,
-                studanteName,
-                absences,
-                grade_one,
-                grade_two,
-                grade_three
-            );
-        }      
+            System.out.printf(
+                    "{message:'the data entered for creating the user is invalid',data:{registration:%d,studanteName:%s,absences:%d,grade_one:%d,grade_two:%d,grade_three:%f,grade_for_final_approval:%s}}",
+                    registration, studanteName, absences, grade_one, grade_two, grade_three);
+        }
     }
 
     // Set Methods
@@ -135,4 +132,26 @@ public class Student {
         return this.grade_for_final_approval;
     }
 
+    // Functionalities
+    public float calculateAbsences(int totalClasses) {
+        float percentageOfAbsences = (this.getAbsences() / totalClasses) * 100;
+        return percentageOfAbsences;
+    }
+
+    public void updateStudentStatus(){
+        int lineInSheets = this.getRegistration() + 3;
+        SheetsServices.updateData(this.getSituation(), lineInSheets,'G');
+        SheetsServices.updateData(this.getGrade_for_final_approval(), lineInSheets,'H');
+    }
+
+    public int averageCalculation() {
+        int AVG = (int) Math.ceil((this.getGrade_one() + this.getGrade_two() + this.getGradle_three()) / 3);
+        return AVG;
+    }
+
+    public void calculateGrade_for_final_approval() throws DataException {
+        int GFFP = 100 - averageCalculation();
+        this.setGrade_for_final_approval(GFFP);
+
+    }
 }

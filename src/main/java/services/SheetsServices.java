@@ -1,6 +1,5 @@
 package services;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -19,19 +18,15 @@ import com.google.api.client.util.store.FileDataStoreFactory;
 
 import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
-import com.google.api.services.sheets.v4.model.UpdateValuesResponse;
 import com.google.api.services.sheets.v4.model.ValueRange;
-
-
-
 
 public class SheetsServices {
     private static Sheets sheets;
     private static String APPLICATION_NAME = "Notas_Alunos";
     private static String SPREADSHEET_ID = "1JlgJqvtU_cw1hnMsmGyVoCNbktzSWUj26wAckMYCVV8";
 
-
     private static Credential authorize() throws IOException, GeneralSecurityException {
+        System.out.println("Iniciando Processo de autenticação");
         InputStream in = SheetsServices.class.getResourceAsStream("/credentials.json");
 
         GoogleClientSecrets clienteSecrets = GoogleClientSecrets.load(JacksonFactory.getDefaultInstance(),
@@ -50,33 +45,53 @@ public class SheetsServices {
 
     public static Sheets getSheetService() throws IOException, GeneralSecurityException {
         Credential credential = authorize();
+        System.out.println("Cronstruindo credenciais");
         return new Sheets.Builder(GoogleNetHttpTransport.newTrustedTransport(), JacksonFactory.getDefaultInstance(),
                 credential).setApplicationName(APPLICATION_NAME).build();
     }
 
-    public static List<List<Object>> getData()throws IOException, GeneralSecurityException{
+    public static List<List<Object>> getData() throws IOException, GeneralSecurityException {
         sheets = getSheetService();
+        System.out.println("Estabelencendo conexão com a planilha e lendo dados");
         String range = "engenharia_de_software!A4:H27";
         ValueRange response = sheets.spreadsheets().values().get(SPREADSHEET_ID, range).execute();
         List<List<Object>> values = response.getValues();
         return values;
     }
 
-    private static void updateSituation(String situation,String line)throws IOException, GeneralSecurityException{
-        List<List<Object>> newValues = Arrays.asList(Arrays.asList(situation));
+    public static <T> void updateData(T value, T lineInSheets,T column) {
+        List<List<Object>> newValues = Arrays.asList(Arrays.asList(value));
         ValueRange data = new ValueRange().setValues(newValues);
 
-        UpdateValuesResponse result = sheets.spreadsheets().values()
-                .update(SPREADSHEET_ID, "engenharia_de_software!G"+line, data).setValueInputOption("RAW").execute();
-
+        try {
+            sheets.spreadsheets().values()
+                    .update(SPREADSHEET_ID, "engenharia_de_software!" +column+ lineInSheets, data).setValueInputOption("RAW")
+                    .execute();
+        } catch (IOException e) {
+            System.out.printf("an error occurred while modifying data in worksheet, insert data at time of error: {value:%s,worksheet_row:%s}", value,lineInSheets);
+            e.printStackTrace();
+        }
     }
 
-    private static void updateNote(float note,String line)throws IOException, GeneralSecurityException{
-        List<List<Object>> newValues = Arrays.asList(Arrays.asList(note));
-        ValueRange data = new ValueRange().setValues(newValues);
+    // private static void updateSituation(String situation,String line)throws
+    // IOException, GeneralSecurityException{
+    // List<List<Object>> newValues = Arrays.asList(Arrays.asList(situation));
+    // ValueRange data = new ValueRange().setValues(newValues);
 
-        UpdateValuesResponse result = sheets.spreadsheets().values()
-                .update(SPREADSHEET_ID, "engenharia_de_software!H"+line, data).setValueInputOption("RAW").execute();
-    }
+    // UpdateValuesResponse result = sheets.spreadsheets().values()
+    // .update(SPREADSHEET_ID, "engenharia_de_software!G"+line,
+    // data).setValueInputOption("RAW").execute();
+
+    // }
+
+    // private static void updateNote(float note,String line)throws IOException,
+    // GeneralSecurityException{
+    // List<List<Object>> newValues = Arrays.asList(Arrays.asList(note));
+    // ValueRange data = new ValueRange().setValues(newValues);
+
+    // UpdateValuesResponse result = sheets.spreadsheets().values()
+    // .update(SPREADSHEET_ID, "engenharia_de_software!H"+line,
+    // data).setValueInputOption("RAW").execute();
+    // }
 
 }
